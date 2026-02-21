@@ -3,6 +3,7 @@
 <head>
     <title>Calendar with Reminders</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
     <h1>{{ month_name }} {{ year }}</h1>
@@ -53,4 +54,5 @@
         {% endfor %}
     </table>
 </body>
+
 </html>
