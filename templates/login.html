@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 <form method="POST">
   <h2>Login</h2>
   <input name="username" placeholder="Username" required>
@@ -36,3 +37,49 @@
 </body>
 </html>
 >>>>>>> 9ff571037ff726e9f33f429547458aadf3b57237
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white min-h-screen flex items-center justify-center">
+
+  <div class="bg-gray-900 p-8 rounded-xl shadow-xl w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+
+    <form method="POST" action="/login" class="space-y-4">
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        required
+        class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        required
+        class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 transition p-3 rounded font-semibold"
+      >
+        Login
+      </button>
+    </form>
+
+    {% if error %}
+      <p class="text-red-500 mt-4 text-center">{{ error }}</p>
+    {% endif %}
+  </div>
+
+</body>
+</html>
+>>>>>>> a26c3f4ece54a5e8db9a3545f6e256dbf285a913
