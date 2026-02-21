@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar with Reminders</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>{{ month_name }} {{ year }}</h1>
+
+    <div class="nav">
+        <a href="/?year={{ year }}&month={{ month - 1 if month > 1 else 12 }}">◀ Prev</a>
+        <a href="/?year={{ year }}&month={{ month + 1 if month < 12 else 1 }}">Next ▶</a>
+    </div>
+
+    <table>
+        <tr>
+            <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th>
+            <th>Fri</th><th>Sat</th><th>Sun</th>
+        </tr>
+
+        {% for week in cal %}
+        <tr>
+            {% for day in week %}
+            <td>
+                {% if day != 0 %}
+                    <b>{{ day }}</b>
+                    {% set date = "%04d-%02d-%02d" | format(year, month, day) %}
+
+                    <form method="POST" action="/add">
+                        <input type="hidden" name="date" value="{{ date }}">
+                        <input type="text" name="text" placeholder="Reminder" required>
+                        <button>Add</button>
+                    </form>
+
+                    {% if date in reminders %}
+                        <ul>
+                            {% for r in reminders[date] %}
+                            <li>
+                                {{ r }}
+                                <form method="POST" action="/delete" style="display:inline">
+                                    <input type="hidden" name="date" value="{{ date }}">
+                                    <input type="hidden" name="index" value="{{ loop.index0 }}">
+                                    <button>x</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
