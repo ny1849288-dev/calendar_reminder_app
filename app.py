@@ -1,81 +1,29 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
 import calendar
 import datetime
-import sqlite3
+import json
 import os
-from models import init_db, get_db
 
 app = Flask(__name__)
-app.secret_key = "change-this-secret-key"
+DATA_FILE = "reminders.json"
 
-# Initialize DB tables
-init_db()
+def load_reminders():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
-def get_current_user():
-    return session.get("user_id")
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        db = get_db()
-        c = db.cursor()
-        try:
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-            db.commit()
-        except sqlite3.IntegrityError:
-            db.close()
-            return "Username already exists. Go back and try another."
-        db.close()
-        return redirect(url_for("login"))
-
-    return render_template("register.html")
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        db = get_db()
-        c = db.cursor()
-        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
-        user = c.fetchone()
-        db.close()
-
-        if user:
-            session["user_id"] = user[0]
-            return redirect(url_for("index"))
-        else:
-            return "Invalid username or password"
-
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
+def save_reminders(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
 @app.route("/")
 def index():
-    if not get_current_user():
-        return redirect(url_for("login"))
-
     year = int(request.args.get("year", datetime.date.today().year))
     month = int(request.args.get("month", datetime.date.today().month))
+
     cal = calendar.monthcalendar(year, month)
-
-    db = get_db()
-    c = db.cursor()
-    c.execute("SELECT id, date, text FROM reminders WHERE user_id=?", (get_current_user(),))
-    rows = c.fetchall()
-    db.close()
-
-    reminders = {}
-    for r_id, date, text in rows:
-        reminders.setdefault(date, []).append({"id": r_id, "text": text})
+    reminders = load_reminders()
 
     return render_template(
         "index.html",
@@ -88,38 +36,31 @@ def index():
 
 @app.route("/add", methods=["POST"])
 def add_reminder():
-    if not get_current_user():
-        return redirect(url_for("login"))
-
     date = request.form["date"]
     text = request.form["text"]
 
-    db = get_db()
-    c = db.cursor()
-    c.execute(
-        "INSERT INTO reminders (user_id, date, text) VALUES (?, ?, ?)",
-        (get_current_user(), date, text)
-    )
-    db.commit()
-    db.close()
+    reminders = load_reminders()
+    reminders.setdefault(date, []).append(text)
+    save_reminders(reminders)
 
     y, m, _ = date.split("-")
     return redirect(url_for("index", year=y, month=m))
 
 @app.route("/delete", methods=["POST"])
 def delete_reminder():
-    if not get_current_user():
-        return redirect(url_for("login"))
+    date = request.form["date"]
+    index = int(request.form["index"])
 
-    reminder_id = request.form["id"]
+    reminders = load_reminders()
+    reminders[date].pop(index)
 
-    db = get_db()
-    c = db.cursor()
-    c.execute("DELETE FROM reminders WHERE id=? AND user_id=?", (reminder_id, get_current_user()))
-    db.commit()
-    db.close()
+    if not reminders[date]:
+        del reminders[date]
 
-    return redirect(url_for("index"))
+    save_reminders(reminders)
+
+    y, m, _ = date.split("-")
+    return redirect(url_for("index", year=y, month=m))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
